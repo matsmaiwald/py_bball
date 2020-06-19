@@ -22,12 +22,14 @@ import math
 import os
 import pyglet
 import time
+from high_scores import update_high_scores, load_high_scores, save_high_scores
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 800
 SCREEN_TITLE = "Basketball Game"
 BASE_THROW_POINT = SCREEN_WIDTH / 2, 60
 SPRITE_SCALING_PLAYER = 0.5
+GAME_LENGTH = 5  # TODO set this back to 60
 
 
 class MenuView(arcade.View):
@@ -78,20 +80,56 @@ class GameOverView(arcade.View):
         super().__init__()
         self.time_taken = 0
         self.score = score
+        self.high_scores = load_high_scores(path="high_scores.txt") # TODO need to make sure these exist
+        self.high_scores = update_high_scores(
+            high_scores=self.high_scores, current_score=self.score
+        )
+        save_high_scores(self.high_scores)
 
     def on_show(self):
         arcade.set_background_color(arcade.color.BLACK)
+
+    def draw_high_scores(self, high_scores: list, start_pos_x: int, start_pos_y: int):
+        arcade.draw_text(
+            "High Scores:", start_pos_x, start_pos_y, arcade.color.WHITE, 30
+        )
+        for count, item in enumerate(high_scores):
+            arcade.draw_text(
+                f"{count + 1}.)",
+                start_pos_x,
+                start_pos_y - 30 * (count + 1),
+                arcade.color.WHITE,
+                20,
+            )
+            arcade.draw_text(
+                str(item[0]),
+                start_pos_x + 120,
+                start_pos_y - 30 * (count + 1),
+                arcade.color.WHITE,
+                20,
+            )
+            arcade.draw_text(
+                str(item[1]),
+                start_pos_x + 200,
+                start_pos_y - 30 * (count + 1),
+                arcade.color.WHITE,
+                20,
+            )
 
     def on_draw(self):
         arcade.start_render()
         """
         Draw "Game over" across the screen.
         """
-        arcade.draw_text("Game Over", 240, 400, arcade.color.WHITE, 54)
+        arcade.draw_text("Game Over", 240, 700, arcade.color.WHITE, 54)
         arcade.draw_text(
-            "Score: {}".format(self.score), 240, 500, arcade.color.WHITE, 54
+            "Score: {}".format(self.score), 240, 600, arcade.color.WHITE, 54
         )
-        arcade.draw_text("Click to restart", 310, 300, arcade.color.WHITE, 24)
+        arcade.draw_text("Click to restart", 310, 50, arcade.color.YELLOW, 24)
+
+        self.draw_high_scores(
+            high_scores=self.high_scores, start_pos_x=240, start_pos_y=500
+        )
 
     def on_mouse_press(self, _x, _y, _button, _modifiers):
         game_view = GameView()
@@ -286,7 +324,9 @@ class GameView(arcade.View):
         # Player sprite
         self.player_list = arcade.SpriteList()
         # Character image from kenney.nl
-        self.player_sprite = arcade.Sprite("assets/player_idle.png", SPRITE_SCALING_PLAYER)
+        self.player_sprite = arcade.Sprite(
+            "assets/player_idle.png", SPRITE_SCALING_PLAYER
+        )
         self.player_sprite.center_x = BASE_THROW_POINT[0]
         self.player_sprite.center_y = BASE_THROW_POINT[1]
         self.player_sprite.filter = pymunk.ShapeFilter(categories=0b1)
@@ -382,7 +422,7 @@ class GameView(arcade.View):
         if self.time_over:
             time_left = 0
         else:
-            time_left = 60 - self.total_time
+            time_left = GAME_LENGTH - self.total_time
         output = f"Time left: {time_left:.0f}"
         arcade.draw_text(output, 20, SCREEN_HEIGHT - 60, arcade.color.WHITE, 24)
 
@@ -510,7 +550,7 @@ class GameView(arcade.View):
             ball.center_x = ball.pymunk_shape.body.position.x
             ball.center_y = ball.pymunk_shape.body.position.y
             ball.angle = math.degrees(ball.pymunk_shape.body.angle)
-        if self.total_time >= 60 and not self.time_over:
+        if self.total_time >= GAME_LENGTH and not self.time_over:
             self.time_over = True
             try:
                 self.buzzer_sound.play()
