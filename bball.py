@@ -80,7 +80,11 @@ class GameOverView(arcade.View):
         super().__init__()
         self.time_taken = 0
         self.score = score
-        self.high_scores = load_high_scores(path="high_scores.txt") # TODO need to make sure these exist
+        try:
+            self.high_scores = load_high_scores(path="high_scores.txt")
+        except FileNotFoundError:
+            empty_high_scores = []
+            self.high_scores = empty_high_scores
         self.high_scores = update_high_scores(
             high_scores=self.high_scores, current_score=self.score
         )
