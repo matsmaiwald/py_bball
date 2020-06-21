@@ -29,7 +29,7 @@ SCREEN_HEIGHT = 800
 SCREEN_TITLE = "Basketball Game"
 BASE_THROW_POINT = SCREEN_WIDTH / 2, 60
 SPRITE_SCALING_PLAYER = 0.5
-GAME_LENGTH = 5  # TODO set this back to 60
+GAME_LENGTH = 60
 
 
 class MenuView(arcade.View):
